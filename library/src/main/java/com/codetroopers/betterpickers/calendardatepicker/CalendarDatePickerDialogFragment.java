@@ -37,16 +37,16 @@ import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import com.codetroopers.betterpickers.HapticFeedbackController;
 import com.codetroopers.betterpickers.OnDialogDismissListener;
 import com.codetroopers.betterpickers.R;
 import com.codetroopers.betterpickers.Utils;
 import com.codetroopers.betterpickers.calendardatepicker.MonthAdapter.CalendarDay;
 import com.nineoldandroids.animation.ObjectAnimator;
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -74,6 +74,8 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
     private static final String KEY_CURRENT_VIEW = "current_view";
     private static final String KEY_LIST_POSITION_OFFSET = "list_position_offset";
     private static final String KEY_THEME = "theme";
+    private static final String KEY_YEAR_OPTIONAL = "year_optional";
+    private static final String KEY_YEAR_ON = "year_on";
     private static final String KEY_DISABLED_DAYS = "disabled_days";
 
     private static final CalendarDay DEFAULT_START_DATE = new CalendarDay(1900, Calendar.JANUARY, 1);
@@ -100,7 +102,7 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
     private TextView mYearView;
     private DayPickerView mDayPickerView;
     private YearPickerView mYearPickerView;
-
+    private CheckBox checkIncludeYear;
     private int mCurrentView = UNINITIALIZED;
     private int mWeekStart = mCalendar.getFirstDayOfWeek();
     private CalendarDay mMinDate = DEFAULT_START_DATE;
@@ -122,6 +124,8 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
     private int mStyleResId;
     private int mSelectedColor;
     private int mUnselectedColor;
+    private boolean yearOptional;
+    private boolean yearOn = true;
 
     /**
      * The callback used to indicate the user is done filling in the date.
@@ -129,10 +133,11 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
     public interface OnDateSetListener {
 
         /**
-         * @param dialog      The view associated with this listener.
-         * @param year        The year that was set.
-         * @param monthOfYear The month that was set (0-11) for compatibility with {@link java.util.Calendar}.
-         * @param dayOfMonth  The day of the month that was set.
+         * @param dialog The view associated with this listener.
+         * @param year The year that was set.
+         * @param monthOfYear The month that was set (0-11) for compatibility with {@link
+         * java.util.Calendar}.
+         * @param dayOfMonth The day of the month that was set.
          */
         void onDateSet(CalendarDatePickerDialogFragment dialog, int year, int monthOfYear, int dayOfMonth);
     }
@@ -164,6 +169,17 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
         return this;
     }
 
+    public CalendarDatePickerDialogFragment setYearOptional(boolean yearOptional) {
+        this.yearOptional = yearOptional;
+        this.yearOn = false;
+        return this;
+    }
+
+    public CalendarDatePickerDialogFragment setYearOn(boolean yearOn) {
+        this.yearOn = yearOn;
+        return this;
+    }
+
     public CalendarDatePickerDialogFragment setThemeCustom(int styleResId) {
         this.mStyleResId = styleResId;
         return this;
@@ -185,7 +201,6 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
         mCancelText = text;
         return this;
     }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -221,6 +236,10 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
         outState.putSparseParcelableArray(KEY_DISABLED_DAYS, mDisabledDays);
     }
 
+    public boolean isYearOn() {
+        return yearOn;
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView: ");
@@ -238,6 +257,7 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
         mSelectedDayTextView = (TextView) view.findViewById(R.id.date_picker_day);
         mYearView = (TextView) view.findViewById(R.id.date_picker_year);
         mYearView.setOnClickListener(this);
+        checkIncludeYear = (CheckBox) view.findViewById(R.id.check_include_year);
 
         int listPosition = -1;
         int listPositionOffset = 0;
@@ -251,7 +271,26 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
             listPositionOffset = savedInstanceState.getInt(KEY_LIST_POSITION_OFFSET);
             mStyleResId = savedInstanceState.getInt(KEY_THEME);
             mDisabledDays = savedInstanceState.getSparseParcelableArray(KEY_DISABLED_DAYS);
+            yearOn = savedInstanceState.getBoolean(KEY_YEAR_ON);
+            yearOptional = savedInstanceState.getBoolean(KEY_YEAR_OPTIONAL);
         }
+
+        if (yearOptional && !yearOn) { mYearView.setVisibility(View.GONE); }
+        if (yearOptional) {
+            checkIncludeYear.setVisibility(View.VISIBLE);
+        } else {
+            checkIncludeYear.setVisibility(View.GONE);
+        }
+        checkIncludeYear.setChecked(yearOn);
+        checkIncludeYear.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                yearOn = isChecked;
+                mDayPickerView.onChange();
+                mDayPickerView.goTo(mDayPickerView.mSelectedDay,false,false,false);
+                mYearView.setVisibility(yearOn ? View.VISIBLE : View.GONE);
+            }
+        });
 
         final Activity activity = getActivity();
         mDayPickerView = new SimpleDayPickerView(activity, this);
@@ -271,7 +310,6 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
         int buttonTextColor = themeColors.getColor(R.styleable.BetterPickersDialogs_bpButtonsTextColor, ContextCompat.getColor(getActivity(), R.color.bpBlue));
         mSelectedColor = themeColors.getColor(R.styleable.BetterPickersDialogs_bpHeaderSelectedTextColor, ContextCompat.getColor(getActivity(), R.color.bpWhite));
         mUnselectedColor = themeColors.getColor(R.styleable.BetterPickersDialogs_bpHeaderUnselectedTextColor, ContextCompat.getColor(getActivity(), R.color.radial_gray_light));
-
 
         mAnimator = (AccessibleDateAnimator) view.findViewById(R.id.animator);
         mAnimator.addView(mDayPickerView);
@@ -449,11 +487,13 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
     }
 
     /**
-     * Sets the range of the dialog to be within the specific dates. Years and months outside of the
-     * range are not shown, the days that are outside of the range are visible but cannot be selected.
+     * Sets the range of the dialog to be within the specific dates. Years and months outside of
+     * the
+     * range are not shown, the days that are outside of the range are visible but cannot be
+     * selected.
      *
      * @param startDate The start date of the range (inclusive)
-     * @param endDate   The end date of the range (inclusive)
+     * @param endDate The end date of the range (inclusive)
      * @throws IllegalArgumentException in case the end date is smaller than the start date
      */
     public CalendarDatePickerDialogFragment setDateRange(@Nullable CalendarDay startDate, @Nullable CalendarDay endDate) {
@@ -557,7 +597,6 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
         }
     }
 
-
     @Override
     public CalendarDay getSelectedDay() {
         return new CalendarDay(mCalendar);
@@ -571,6 +610,11 @@ public class CalendarDatePickerDialogFragment extends DialogFragment implements 
     @Override
     public CalendarDay getMaxDate() {
         return mMaxDate;
+    }
+
+    @Override
+    public boolean isYearIncluded() {
+        return yearOn;
     }
 
     @Override

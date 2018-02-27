@@ -35,7 +35,13 @@
         android:layout_width="@dimen/date_picker_component_width"
         android:layout_height="@dimen/selected_calendar_layout_height" />
 
-
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/check_include_year"
+        android:text="@string/include_year"
+        android:visibility="gone"
+        android:layout_gravity="center_horizontal"/>
     <include layout="@layout/layout_ok_cancel_buttons" />
 
 </LinearLayout>

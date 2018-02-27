@@ -42,7 +42,7 @@ public abstract class MonthAdapter extends BaseAdapter implements OnDayClickList
     private static final String TAG = "SimpleMonthAdapter";
 
     private final Context mContext;
-    private final CalendarDatePickerController mController;
+    protected final CalendarDatePickerController mController;
 
     private CalendarDay mSelectedDay;
 

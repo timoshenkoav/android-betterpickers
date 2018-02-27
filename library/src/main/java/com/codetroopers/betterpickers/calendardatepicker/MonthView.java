@@ -202,6 +202,12 @@ public abstract class MonthView extends View {
     protected int mDayBackgroundColorDisabled;
     protected int mMonthTitleColor;
 
+    public void setIncludeYear(boolean includeYear) {
+        this.includeYear = includeYear;
+    }
+
+    private boolean includeYear;
+
     public MonthView(Context context) {
         super(context);
         Resources res = context.getResources();
@@ -448,7 +454,9 @@ public abstract class MonthView extends View {
     }
 
     private String getMonthAndYearString() {
-        int flags = DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_NO_MONTH_DAY;
+
+        int yearFlag = includeYear ? DateUtils.FORMAT_SHOW_YEAR : DateUtils.FORMAT_NO_YEAR;
+        int flags = DateUtils.FORMAT_SHOW_DATE | yearFlag | DateUtils.FORMAT_NO_MONTH_DAY;
         mStringBuilder.setLength(0);
         long millis = mCalendar.getTimeInMillis();
         String monthTitle = DateUtils.formatDateRange(getContext(), mFormatter, millis, millis, flags, Time.getCurrentTimezone()).toString();

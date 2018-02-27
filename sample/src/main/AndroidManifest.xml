@@ -395,6 +395,14 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".activity.calendardatepicker.SampleCalendarDateOptionalYear"
+            android:label="Calendar Date/Optional Year">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="com.doomonafireball.betterpickers.sample.SAMPLE"/>
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".activity.calendardatepicker.SampleCalendarDateFirstDayOfWeek"
             android:label="Calendar Date/Forced First Day Of Week">
             <intent-filter>

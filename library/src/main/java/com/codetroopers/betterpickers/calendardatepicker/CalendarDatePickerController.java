@@ -42,6 +42,8 @@ interface CalendarDatePickerController {
 
     CalendarDay getMaxDate();
 
+    boolean isYearIncluded();
+
     SparseArray<CalendarDay> getDisabledDays();
 
     void tryVibrate();
